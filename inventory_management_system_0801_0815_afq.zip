@@ -1,0 +1,58 @@
+// 代码生成时间: 2025-08-01 08:15:51
+package com.example.inventory;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+
+@Entity
+public class InventoryItem {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    private int quantity;
+
+    // getters and setters
+}
+```
+
+InventoryItemRepository.java:
+```java
+package com.example.inventory.repository;
+
+import com.example.inventory.InventoryItem;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface InventoryItemRepository extends JpaRepository<InventoryItem, Long> {
+    // 这里可以添加一些自定义的数据访问方法
+}
+```
+
+InventoryService.java:
+```java
+package com.example.inventory.service;
+
+import com.example.inventory.InventoryItem;
+import com.example.inventory.repository.InventoryItemRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class InventoryService {
+    @Autowired
+    private InventoryItemRepository repository;
+
+    public List<InventoryItem> getAllItems() {
+        return repository.findAll();
+    }
+    
+    public InventoryItem getItemById(Long id) {
+        return repository.findById(id).orElseThrow("=> new ItemNotFoundException('Item not found')");
+    }
+    
+    // 其他方法
+}
