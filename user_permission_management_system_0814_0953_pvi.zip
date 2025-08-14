@@ -1,0 +1,189 @@
+// 代码生成时间: 2025-08-14 09:53:27
+archive:0;
+Archive contains the following files:
+
+user_permission_management_system/src/main/java/com/example/permission/PermissionApplication.java
+user_permission_management_system/src/main/java/com/example/permission/config/SecurityConfig.java
+user_permission_management_system/src/main/java/com/example/permission/dto/UserDTO.java
+user_permission_management_system/src/main/java/com/example/permission/entity/User.java
+user_permission_management_system/src/main/java/com/example/permission/repository/UserRepository.java
+user_permission_management_system/src/main/java/com/example/permission/service/UserService.java
+user_permission_management_system/src/main/java/com/example/permission/controller/UserController.java
+user_permission_management_system/src/main/java/com/example/permission/exception/CustomExceptionHandler.java
+user_permission_management_system/src/main/java/com/example/permission/exception/NotFoundException.java
+
+// PermissionApplication.java
+package com.example.permission;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class PermissionApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(PermissionApplication.class, args);
+    }
+}
+
+// SecurityConfig.java
+package com.example.permission.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+            .csrf().disable()
+            .authorizeRequests()
+                .antMatchers("/api/public/**").permitAll()
+                .anyRequest().authenticated()
+            .and()
+                .formLogin().loginPage("/login").permitAll()
+            .and()
+                .logout().permitAll();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}
+
+// UserDTO.java
+package com.example.permission.dto;
+
+public class UserDTO {
+    private String username;
+    private String password;
+    private String role;
+    // Getters and setters
+}
+
+// User.java
+package com.example.permission.entity;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+
+@Entity
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String username;
+    private String password;
+    private String role;
+    // Getters and setters
+}
+
+// UserRepository.java
+package com.example.permission.repository;
+
+import com.example.permission.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+    User findByUsername(String username);
+}
+
+// UserService.java
+package com.example.permission.service;
+
+import com.example.permission.entity.User;
+import com.example.permission.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+
+@Service
+public class UserService {
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    public User registerUser(User user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        return userRepository.save(user);
+    }
+
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
+}
+
+// UserController.java
+package com.example.permission.controller;
+
+import com.example.permission.dto.UserDTO;
+import com.example.permission.entity.User;
+import com.example.permission.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+    @Autowired
+    private UserService userService;
+
+    @PostMapping("/register")
+    public ResponseEntity<User> registerUser(@RequestBody UserDTO userDTO) {
+        User user = new User();
+        user.setUsername(userDTO.getUsername());
+        user.setPassword(userDTO.getPassword());
+        user.setRole(userDTO.getRole());
+        User registeredUser = userService.registerUser(user);
+        return ResponseEntity.ok(registeredUser);
+    }
+
+    @GetMapping("/{username}")
+    public ResponseEntity<User> getUserByUsername(@PathVariable String username) {
+        return userService.findByUsername(username)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+}
+
+// CustomExceptionHandler.java
+package com.example.permission.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+@ControllerAdvice
+public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<Object> handleNotFoundException(NotFoundException ex, WebRequest request) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+}
+
+// NotFoundException.java
+package com.example.permission.exception;
+
+public class NotFoundException extends RuntimeException {
+    public NotFoundException(String message) {
+        super(message);
+    }
+}
+
