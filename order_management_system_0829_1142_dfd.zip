@@ -1,0 +1,74 @@
+// 代码生成时间: 2025-08-29 11:42:01
+package com.example.ordermanagementsystem;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
+@SpringBootApplication
+@RestController
+@RequestMapping("/orders")
+public class OrderManagementSystemApplication {
+
+    private static final ConcurrentHashMap<Integer, AtomicReference<Order>> ORDERS = new ConcurrentHashMap<>();
+    private static final AtomicInteger ORDER_ID_GENERATOR = new AtomicInteger(1);
+
+    public static void main(String[] args) {
+        SpringApplication.run(OrderManagementSystemApplication.class, args);
+    }
+
+    @PostMapping("/placeOrder")
+    public Order placeOrder(@RequestBody Order order) {
+        int orderId = ORDER_ID_GENERATOR.incrementAndGet();
+        order.setId(orderId);
+        ORDERS.put(orderId, new AtomicReference<>(order));
+        return order;
+    }
+
+    @GetMapping("/order/{id}")
+    public Order getOrderById(@PathVariable Integer id) {
+        return ORDERS.get(id).get();
+    }
+
+    @PutMapping("/updateOrder/{id}")
+    public Order updateOrder(@PathVariable Integer id, @RequestBody Order order) {
+        if (ORDERS.containsKey(id)) {
+            ORDERS.get(id).set(order);
+            return order;
+        } else {
+            throw new OrderNotFoundException("Order not found with id: " + id);
+        }
+    }
+
+    @ExceptionHandler(OrderNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public String handleOrderNotFoundException(OrderNotFoundException ex) {
+        return ex.getMessage();
+    }
+
+    static class Order {
+        private int id;
+        private String status;
+        private double totalAmount;
+        private String customerName;
+
+        // Getters and setters
+        public int getId() { return id; }
+        public void setId(int id) { this.id = id; }
+        public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
+        public double getTotalAmount() { return totalAmount; }
+        public void setTotalAmount(double totalAmount) { this.totalAmount = totalAmount; }
+        public String getCustomerName() { return customerName; }
+        public void setCustomerName(String customerName) { this.customerName = customerName; }
+    }
+
+    static class OrderNotFoundException extends RuntimeException {
+        public OrderNotFoundException(String message) {
+            super(message);
+        }
+    }
+}
