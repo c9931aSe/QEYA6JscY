@@ -1,0 +1,63 @@
+// 代码生成时间: 2025-08-30 00:57:46
+package com.example.demo;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+import javax.sql.DataSource;
+import liquibase.integration.spring.SpringBootDatabaseChangeLogLock;
+import liquibase.integration.spring.SpringBootDatabaseChangeLogLockCallback;
+import liquibase.integration.spring.SpringBootResourceAccessor;
+import liquibase.integration.spring.SpringLiquibase;
+import java.util.Arrays;
+import java.util.List;
+
+@SpringBootApplication
+public class DemoApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApplication.class, args);
+    }
+
+    @Bean
+    public SpringLiquibase liquibase(DataSource dataSource, SpringBootDatabaseChangeLogLockCallback lockCallback) {
+        SpringLiquibase liquibase = new SpringLiquibase();
+        liquibase.setDataSource(dataSource);
+        liquibase.setChangeLogLockWaitTime(100);
+        liquibase.setChangeLogLockPollRate(100);
+        liquibase.setChangeLogLockThreadCount(1);
+        liquibase.setDatabaseChangeLogLock(SpringBootDatabaseChangeLogLock.class);
+        liquibase.setDatabaseChangeLogCallback(lockCallback);
+        liquibase.setResourceAccessor(new SpringBootResourceAccessor());
+        return liquibase;
+    }
+
+    @RestController
+    class HealthCheckController {
+
+        @GetMapping("/health")
+        public String getHealth() {
+            return "Database connection pool is active and ready";
+        }
+    }
+}
+
+package com.example.demo.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+@ControllerAdvice
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public String handleGlobalException(Exception e) {
+        return "Error: " + e.getMessage();
+    }
+}
