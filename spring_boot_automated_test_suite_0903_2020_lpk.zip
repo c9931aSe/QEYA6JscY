@@ -1,0 +1,125 @@
+// 代码生成时间: 2025-09-03 20:20:02
+zip archive containing the following files:
+
+// application.properties
+spring_boot_automated_test_suite/application.properties
+# Application Properties
+
+
+// Application.java
+spring_boot_automated_test_suite/src/main/java/com/example/demo/Application.java
+package com.example.demo;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class Application {
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+}
+
+// ExceptionController.java
+spring_boot_automated_test_suite/src/main/java/com/example/demo/exception/ExceptionController.java
+package com.example.demo.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+@ControllerAdvice
+public class ExceptionController {
+    @ExceptionHandler(Exception.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public String handleException(Exception e) {
+        return "Error: " + e.getMessage();
+    }
+}
+
+// TestController.java
+spring_boot_automated_test_suite/src/main/java/com/example/demo/controller/TestController.java
+package com.example.demo.controller;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/test")
+public class TestController {
+    @GetMapping
+    public ResponseEntity<String> test() {
+        return ResponseEntity.ok("Test API is working!");
+    }
+}
+
+// TestService.java
+spring_boot_automated_test_suite/src/main/java/com/example/demo/service/TestService.java
+package com.example.demo.service;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class TestService {
+    public String performTest() {
+        // Add test logic here
+        return "Test performed successfully";
+    }
+}
+
+// TestServiceImpl.java
+spring_boot_automated_test_suite/src/main/java/com/example/demo/service/impl/TestServiceImpl.java
+package com.example.demo.service.impl;
+
+import com.example.demo.service.TestService;
+import org.springframework.stereotype.Service;
+
+@Service
+public class TestServiceImpl implements TestService {
+    @Override
+    public String performTest() {
+        // Add test logic here
+        return "Test performed successfully";
+    }
+}
+
+// Test.java
+spring_boot_automated_test_suite/src/test/java/com/example/demo/Test.java
+package com.example.demo;
+
+import com.example.demo.controller.TestController;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(TestController.class)
+public class Test {
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private TestService testService;
+
+    @Test
+    public void testTestApi() throws Exception {
+        when(testService.performTest()).thenReturn("Test performed successfully");
+        mockMvc.perform(get("/api/test")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.content().string("Test API is working!"));
+    }
+}
